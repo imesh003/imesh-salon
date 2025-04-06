@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Imesh Salon - Premium hair and beauty services in Colombo. Hair styling, coloring, facials, bridal packages and more.">
+  <title>Imesh Salon | Luxury Beauty Experience</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              200: '#fbcfe8',
+              300: '#f9a8d4',
+              400: '#f472b6',
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d',
+              800: '#9d174d',
+              900: '#831843',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Playfair Display', 'serif'],
+          },
+        }
+      }
+    }
+  </script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+  
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/p5.min.js"></script>
+  
+  <style>
+    /* Custom styles */
+    .hero-gradient {
+      background: linear-gradient(135deg, rgba(236,72,153,0.9) 0%, rgba(219,39,119,0.95) 100%);
+    }
+    
+    .nav-link {
+      position: relative;
+    }
+    
+    .nav-link:after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: 0;
+      left: 0;
+      background-color: #db2777;
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover:after {
+      width: 100%;
+    }
+    
+    .service-card {
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      backface-visibility: hidden;
+    }
+    
+    .service-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.08);
+    }
+    
+    .stylist-card {
+      perspective: 1000px;
+    }
+    
+    .stylist-inner {
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    
+    .stylist-card:hover .stylist-inner {
+      transform: rotateY(180deg);
+    }
+    
+    .stylist-front, .stylist-back {
+      backface-visibility: hidden;
+    }
+    
+    .stylist-back {
+      transform: rotateY(180deg);
+    }
+    
+    .testimonial-card {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+    
+    .testimonial-card.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* Three.js canvas */
+    #threejs-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.15;
+    }
+    
+    /* Booking modal */
+    .modal {
+      transition: all 0.3s ease;
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+  </style>
+</head>
+<body class="font-sans bg-primary-50 text-gray-800 antialiased">
+
+  <!-- Three.js Background -->
+  <div id="threejs-bg"></div>
+  
+  <!-- Floating particles (p5.js) -->
+  <div id="p5-particles"></div>
+
+  <!-- Header with Hero Section -->
+  <header class="relative overflow-hidden">
+    <div class="hero-gradient text-white min-h-screen flex items-center">
+      <div class="container mx-auto px-6 py-24 relative z-10">
+        <div class="max-w-3xl">
+          <h1 class="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight">
+            <span class="block">Reveal Your</span>
+            <span class="block text-primary-200">True Beauty</span>
+          </h1>
+          <p class="text-xl md:text-2xl mb-10 max-w-2xl">
+            Imesh Salon offers a transformative beauty experience with expert stylists, premium products, and personalized care.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <button id="book-now-btn" class="bg-white text-primary-700 px-8 py-4 rounded-full font-semibold hover:bg-primary-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+              Book Your Appointment
+            </button>
+            <a href="#services" class="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-primary-700 transition-all duration-300 transform hover:scale-105">
+              Explore Services
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="container mx-auto px-6">
+      <div class="flex justify-between items-center py-4">
+        <a href="#" class="text-2xl font-display font-bold text-primary-700">Imesh Salon</a>
+        
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="#about" class="nav-link text-gray-700 hover:text-primary-700">About</a>
+          <a href="#services" class="nav-link text-gray-700 hover:text-primary-700">Services</a>
+          <a href="#team" class="nav-link text-gray-700 hover:text-primary-700">Our Team</a>
+          <a href="#testimonials" class="nav-link text-gray-700 hover:text-primary-700">Testimonials</a>
+          <a href="#contact" class="nav-link text-gray-700 hover:text-primary-700">Contact</a>
+          <a href="#" class="bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition">Book Now</a>
+        </div>
+        
+        <button id="mobile-menu-button" class="md:hidden text-gray-700">
+          <i class="fas fa-bars text-2xl"></i>
+        </button>
+      </div>
+      
+      <!-- Mobile menu -->
+      <div id="mobile-menu" class="hidden md:hidden pb-4">
+        <a href="#about" class="block py-2 text-gray-700 hover:text-primary-700">About</a>
+        <a href="#services" class="block py-2 text-gray-700 hover:text-primary-700">Services</a>
+        <a href="#team" class="block py-2 text-gray-700 hover:text-primary-700">Our Team</a>
+        <a href="#testimonials" class="block py-2 text-gray-700 hover:text-primary-700">Testimonials</a>
+        <a href="#contact" class="block py-2 text-gray-700 hover:text-primary-700">Contact</a>
+        <a href="#" class="inline-block mt-2 bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition">Book Now</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- About Section -->
+  <section id="about" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col lg:flex-row items-center gap-12">
+        <div class="lg:w-1/2">
+          <h2 class="text-3xl md:text-4xl font-display font-bold text-primary-800 mb-6">
+            <span class="block">Luxury Beauty</span>
+            <span class="block text-primary-600">Experience</span>
+          </h2>
+          <p class="text-lg text-gray-600 mb-6">
+            Founded in 2015, Imesh Salon has become Colombo's premier destination for those seeking exceptional beauty services in an elegant, relaxing environment.
+          </p>
+          <p class="text-lg text-gray-600 mb-8">
+            Our team of internationally trained stylists and beauticians combine technical expertise with artistic vision to create looks that enhance your natural beauty.
+          </p>
+          
+          <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="flex items-center">
+              <div class="bg-primary-100 p-3 rounded-full mr-4">
+                <i class="fas fa-award text-primary-600 text-xl"></i>
+              </div>
+              <span class="font-medium">Award Winning</span>
+            </div>
+            <div class="flex items-center">
+              <div class="bg-primary-100 p-3 rounded-full mr-4">
+                <i class="fas fa-leaf text-primary-600 text-xl"></i>
+              </div>
+              <span class="font-medium">Eco-Friendly</span>
+            </div>
+            <div class="flex items-center">
+              <div class="bg-primary-100 p-3 rounded-full mr-4">
+                <i class="fas fa-star text-primary-600 text-xl"></i>
+              </div>
+              <span class="font-medium">Premium Products</span>
+            </div>
+            <div class="flex items-center">
+              <div class="bg-primary-100 p-3 rounded-full mr-4">
+                <i class="fas fa-heart text-primary-600 text-xl"></i>
+              </div>
+              <span class="font-medium">Personalized Care</span>
+            </div>
+          </div>
+          
+          <button class="bg-primary-600 text-white px-8 py-3 rounded-full font-medium hover:bg-primary-700 transition transform hover:scale-105">
+            Our Story
+          </button>
+        </div>
+        
+        <div class="lg:w-1/2 relative">
+          <div class="bg-primary-100 rounded-2xl p-1 shadow-xl">
+            <div class="bg-gray-200 h-80 w-full rounded-xl flex items-center justify-center">
+              <i class="fas fa-spa text-6xl text-primary-500"></i>
+            </div>
+          </div>
+          <div class="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-lg w-2/3">
+            <div class="flex items-center">
+              <div class="bg-primary-100 p-3 rounded-full mr-4">
+                <i class="fas fa-calendar-check text-primary-600"></i>
+              </div>
+              <div>
+                <h4 class="font-bold">Online Booking</h4>
+                <p class="text-sm text-gray-600">Schedule anytime, anywhere</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="services" class="py-20 bg-primary-50">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-display font-bold text-primary-800 mb-4">
+          Our Signature Services
+        </h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          We offer a comprehensive range of beauty services tailored to your unique needs
+        </p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Hair Services -->
+        <div class="service-card bg-white rounded-xl overflow-hidden shadow-md">
+          <div class="bg-primary-100 h-48 flex items-center justify-center">
+            <i class="fas fa-cut text-6xl text-primary-600"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-3">Hair Services</h3>
+            <ul class="space-y-2 text-gray-600 mb-4">
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Precision Haircuts
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Coloring & Highlights
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Keratin Treatments
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Styling & Blowouts
+              </li>
+            </ul>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-primary-700">From LKR 2,500</span>
+              <button class="text-primary-600 hover:text-primary-800">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Skin Care -->
+        <div class="service-card bg-white rounded-xl overflow-hidden shadow-md">
+          <div class="bg-primary-100 h-48 flex items-center justify-center">
+            <i class="fas fa-spa text-6xl text-primary-600"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-3">Skin Care</h3>
+            <ul class="space-y-2 text-gray-600 mb-4">
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Signature Facials
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Microdermabrasion
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Chemical Peels
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                LED Light Therapy
+              </li>
+            </ul>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-primary-700">From LKR 3,500</span>
+              <button class="text-primary-600 hover:text-primary-800">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Nail Care -->
+        <div class="service-card bg-white rounded-xl overflow-hidden shadow-md">
+          <div class="bg-primary-100 h-48 flex items-center justify-center">
+            <i class="fas fa-hand-sparkles text-6xl text-primary-600"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-3">Nail Care</h3>
+            <ul class="space-y-2 text-gray-600 mb-4">
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Luxury Manicures
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Spa Pedicures
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Gel Extensions
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Nail Art Design
+              </li>
+            </ul>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-primary-700">From LKR 2,800</span>
+              <button class="text-primary-600 hover:text-primary-800">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Makeup Artistry -->
+        <div class="service-card bg-white rounded-xl overflow-hidden shadow-md">
+          <div class="bg-primary-100 h-48 flex items-center justify-center">
+            <i class="fas fa-paint-brush text-6xl text-primary-600"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-3">Makeup Artistry</h3>
+            <ul class="space-y-2 text-gray-600 mb-4">
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Bridal Makeup
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Editorial Makeup
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Special Occasion
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Makeup Lessons
+              </li>
+            </ul>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-primary-700">From LKR 5,000</span>
+              <button class="text-primary-600 hover:text-primary-800">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hair Treatments -->
+        <div class="service-card bg-white rounded-xl overflow-hidden shadow-md">
+          <div class="bg-primary-100 h-48 flex items-center justify-center">
+            <i class="fas fa-air-freshener text-6xl text-primary-600"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-3">Hair Treatments</h3>
+            <ul class="space-y-2 text-gray-600 mb-4">
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Deep Conditioning
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Scalp Treatments
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Hair Botox
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Olaplex Repair
+              </li>
+            </ul>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-primary-700">From LKR 4,500</span>
+              <button class="text-primary-600 hover:text-primary-800">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Bridal Packages -->
+        <div class="service-card bg-white rounded-xl overflow-hidden shadow-md">
+          <div class="bg-primary-100 h-48 flex items-center justify-center">
+            <i class="fas fa-ring text-6xl text-primary-600"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-3">Bridal Packages</h3>
+            <ul class="space-y-2 text-gray-600 mb-4">
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Complete Bridal Makeover
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Bridal Party Packages
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                Trial Sessions
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check text-primary-500 mr-2"></i>
+                On-Location Service
+              </li>
+            </ul>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-primary-700">From LKR 15,000</span>
+              <button class="text-primary-600 hover:text-primary-800">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-12">
+        <button class="border-2 border-primary-600 text-primary-600 px-8 py-3 rounded-full font-medium hover:bg-primary-600 hover:text-white transition transform hover:scale-105">
+          View All Services
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team Section -->
+  <section id="team" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-display font-bold text-primary-800 mb-4">
+          Meet Our Experts
+        </h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Our talented team of beauty professionals is dedicated to making you look and feel your best
+        </p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Imesh Fernando -->
+        <div class="stylist-card">
+          <div class="stylist-inner bg-white rounded-xl shadow-lg h-full">
+            <div class="stylist-front">
+              <div class="bg-primary-100 h-64 rounded-t-xl flex items-center justify-center">
+                <i class="fas fa-user-tie text-6xl text-primary-600"></i>
+              </div>
+              <div class="p-6 text-center">
+                <h3 class="text-xl font-bold mb-1">Imesh Fernando</h3>
+                <p class="text-sm text-primary-600 mb-3">Founder & Creative Director</p>
+                <div class="flex justify-center space-x-2">
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Hair Styling</span>
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Color Expert</span>
+                </div>
+              </div>
+            </div>
+            <div class="stylist-back absolute top-0 left-0 w-full h-full p-6 bg-primary-700 text-white rounded-xl flex flex-col justify-center items-center">
+              <h3 class="text-xl font-bold mb-2">Imesh Fernando</h3>
+              <p class="text-sm mb-4 text-center">With over 15 years in the industry, Imesh brings international experience from London and Paris fashion weeks.</p>
+              <div class="flex space-x-3">
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-facebook"></i>
+                </a>
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-linkedin"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sashini Perera -->
+        <div class="stylist-card">
+          <div class="stylist-inner bg-white rounded-xl shadow-lg h-full">
+            <div class="stylist-front">
+              <div class="bg-primary-100 h-64 rounded-t-xl flex items-center justify-center">
+                <i class="fas fa-user text-6xl text-primary-600"></i>
+              </div>
+              <div class="p-6 text-center">
+                <h3 class="text-xl font-bold mb-1">Sashini Perera</h3>
+                <p class="text-sm text-primary-600 mb-3">Senior Beautician</p>
+                <div class="flex justify-center space-x-2">
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Facials</span>
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Bridal</span>
+                </div>
+              </div>
+            </div>
+            <div class="stylist-back absolute top-0 left-0 w-full h-full p-6 bg-primary-700 text-white rounded-xl flex flex-col justify-center items-center">
+              <h3 class="text-xl font-bold mb-2">Sashini Perera</h3>
+              <p class="text-sm mb-4 text-center">Specializing in bridal and special occasion makeup, Sashini has trained with top artists in Dubai and Mumbai.</p>
+              <div class="flex space-x-3">
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-facebook"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Nadeesha Silva -->
+        <div class="stylist-card">
+          <div class="stylist-inner bg-white rounded-xl shadow-lg h-full">
+            <div class="stylist-front">
+              <div class="bg-primary-100 h-64 rounded-t-xl flex items-center justify-center">
+                <i class="fas fa-user text-6xl text-primary-600"></i>
+              </div>
+              <div class="p-6 text-center">
+                <h3 class="text-xl font-bold mb-1">Nadeesha Silva</h3>
+                <p class="text-sm text-primary-600 mb-3">Hair Specialist</p>
+                <div class="flex justify-center space-x-2">
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Extensions</span>
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Treatments</span>
+                </div>
+              </div>
+            </div>
+            <div class="stylist-back absolute top-0 left-0 w-full h-full p-6 bg-primary-700 text-white rounded-xl flex flex-col justify-center items-center">
+              <h3 class="text-xl font-bold mb-2">Nadeesha Silva</h3>
+              <p class="text-sm mb-4 text-center">Certified in advanced hair extension techniques and keratin treatments from Brazil and the USA.</p>
+              <div class="flex space-x-3">
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-pinterest"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Janaki Ratnayake -->
+        <div class="stylist-card">
+          <div class="stylist-inner bg-white rounded-xl shadow-lg h-full">
+            <div class="stylist-front">
+              <div class="bg-primary-100 h-64 rounded-t-xl flex items-center justify-center">
+                <i class="fas fa-user text-6xl text-primary-600"></i>
+              </div>
+              <div class="p-6 text-center">
+                <h3 class="text-xl font-bold mb-1">Janaki Ratnayake</h3>
+                <p class="text-sm text-primary-600 mb-3">Nail Technician</p>
+                <div class="flex justify-center space-x-2">
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Nail Art</span>
+                  <span class="bg-primary-100 text-primary-600 text-xs px-2 py-1 rounded">Gel</span>
+                </div>
+              </div>
+            </div>
+            <div class="stylist-back absolute top-0 left-0 w-full h-full p-6 bg-primary-700 text-white rounded-xl flex flex-col justify-center items-center">
+              <h3 class="text-xl font-bold mb-2">Janaki Ratnayake</h3>
+              <p class="text-sm mb-4 text-center">Specializing in intricate nail art designs and healthy nail treatments, trained in Korea and Japan.</p>
+              <div class="flex space-x-3">
+                <a href="#" class="text-white hover:text-primary-200">
+                  <i class="fab fa-instagram"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-12">
+        <button class="bg-primary-600 text-white px-8 py-3 rounded-full font-medium hover:bg-primary-700 transition transform hover:scale-105">
+          Join Our Team
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="py-20 bg-primary-50">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-display font-bold text-primary-800 mb-4">
+          Client Love
+        </h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Don't just take our word for it - hear what our clients say about their experiences
+        </p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <div class="testimonial-card bg-white p-8 rounded-xl shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+              <i class="fas fa-user text-primary-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold">Nadeesha R.</h4>
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+            </div>
+          </div>
+          <p class="text-gray-600 italic mb-4">
+            "Imesh Salon completely transformed my look for my wedding. The team was incredibly professional and made me feel so comfortable. My hair and makeup lasted all night and looked even better in photos!"
+          </p>
+          <div class="text-sm text-gray-500">Bridal Makeover • May 2023</div>
+        </div>
+        
+        <div class="testimonial-card bg-white p-8 rounded-xl shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+              <i class="fas fa-user text-primary-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold">Janaki S.</h4>
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+            </div>
+          </div>
+          <p class="text-gray-600 italic mb-4">
+            "I've been coming to Imesh for my keratin treatments for 3 years now. They've completely transformed my frizzy hair into smooth, manageable locks. Worth every rupee!"
+          </p>
+          <div class="text-sm text-gray-500">Keratin Treatment • April 2023</div>
+        </div>
+        
+        <div class="testimonial-card bg-white p-8 rounded-xl shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+              <i class="fas fa-user text-primary-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold">Ruvini P.</h4>
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star-half-alt"></i>
+              </div>
+            </div>
+          </div>
+          <p class="text-gray-600 italic mb-4">
+            "The facial treatments here are next level. My skin has never looked better. The esthetician took time to understand my skin concerns and recommended the perfect products."
+          </p>
+          <div class="text-sm text-gray-500">Signature Facial • March 2023</div>
+        </div>
+        
+        <div class="testimonial-card bg-white p-8 rounded-xl shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+              <i class="fas fa-user text-primary-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold">Malith F.</h4>
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+            </div>
+          </div>
+          <p class="text-gray-600 italic mb-4">
+            "As a guy, I was hesitant about going to a salon, but Imesh made me feel completely at ease. The haircut was exactly what I wanted - modern but still professional."
+          </p>
+          <div class="text-sm text-gray-500">Men's Cut • February 2023</div>
+        </div>
+      </div>
+      
+      <div class="text-center">
+        <button class="border-2 border-primary-600 text-primary-600 px-8 py-3 rounded-full font-medium hover:bg-primary-600 hover:text-white transition transform hover:scale-105">
+          Read More Reviews
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="py-16 bg-primary-700 text-white">
+    <div class="container mx-auto px-6">
+      <div class="grid md:grid-cols-4 gap-8 text-center">
+        <div class="p-6">
+          <div class="text-4xl font-bold mb-2" id="clients-count">0</div>
+          <div class="text-primary-200">Happy Clients</div>
+        </div>
+        <div class="p-6">
+          <div class="text-4xl font-bold mb-2" id="services-count">0</div>
+          <div class="text-primary-200">Services Offered</div>
+        </div>
+        <div class="p-6">
+          <div class="text-4xl font-bold mb-2" id="years-count">0</div>
+          <div class="text-primary-200">Years Experience</div>
+        </div>
+        <div class="p-6">
+          <div class="text-4xl font-bold mb-2" id="awards-count">0</div>
+          <div class="text-primary-200">Industry Awards</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-display font-bold text-primary-800 mb-4">
+          Visit Us
+        </h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          We'd love to welcome you to our salon. Book your appointment today!
+        </p>
+      </div>
+      
+      <div class="flex flex-col lg:flex-row gap-12">
+        <div class="lg:w-1/2">
+          <div class="bg-primary-50 rounded-xl p-8 shadow-md h-full">
+            <h3 class="text-xl font-bold mb-6">Contact Information</h3>
+            
+            <div class="space-y-6">
+              <div class="flex items-start">
+                <div class="bg-primary-100 p-3 rounded-full mr-4">
+                  <i class="fas fa-map-marker-alt text-primary-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">Our Location</h4>
+                  <p class="text-gray-600">No. 22, Style Avenue, Colombo 03</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="bg-primary-100 p-3 rounded-full mr-4">
+                  <i class="fas fa-phone-alt text-primary-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">Call Us</h4>
+                  <p class="text-gray-600">077-1234567</p>
+                  <p class="text-gray-600">011-2345678</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="bg-primary-100 p-3 rounded-full mr-4">
+                  <i class="fas fa-envelope text-primary-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">Email Us</h4>
+                  <p class="text-gray-600">info@imeshsalon.com</p>
+                  <p class="text-gray-600">bookings@imeshsalon.com</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="bg-primary-100 p-3 rounded-full mr-4">
+                  <i class="fas fa-clock text-primary-600"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">Opening Hours</h4>
+                  <p class="text-gray-600">Monday - Friday: 9:00 AM - 7:00 PM</p>
+                  <p class="text-gray-600">Saturday: 9:00 AM - 5:00 PM</p>
+                  <p class="text-gray-600">Sunday: 10:00 AM - 4:00 PM</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-8">
+              <h4 class="font-bold mb-4">Follow Us</h4>
+              <div class="flex space-x-4">
+                <a href="#" class="bg-primary-100 text-primary-600 p-3 rounded-full hover:bg-primary-200 transition">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="bg-primary-100 text-primary-600 p-3 rounded-full hover:bg-primary-200 transition">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="bg-primary-100 text-primary-600 p-3 rounded-full hover:bg-primary-200 transition">
+                  <i class="fab fa-tiktok"></i>
+                </a>
+                <a href="#" class="bg-primary-100 text-primary-600 p-3 rounded-full hover:bg-primary-200 transition">
+                  <i class="fab fa-pinterest-p"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="lg:w-1/2">
+          <div class="bg-primary-50 rounded-xl p-8 shadow-md h-full">
+            <h3 class="text-xl font-bold mb-6">Send Us a Message</h3>
+            
+            <form class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <input type="text" id="name" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+                <div>
+                  <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" id="email" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+              </div>
+              
+              <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input type="tel" id="phone" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+              </div>
+              
+              <div>
+                <label for="service" class="block text-sm font-medium text-gray-700 mb-1">Service Interested In</label>
+                <select id="service" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                  <option value="">Select a service</option>
+                  <option value="hair">Hair Services</option>
+                  <option value="skin">Skin Care</option>
+                  <option value="nails">Nail Services</option>
+                  <option value="makeup">Makeup</option>
+                  <option value="bridal">Bridal Packages</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <textarea id="message" rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+              </div>
+              
+              <button type="submit" class="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition w-full">
+                Send Message
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="py-16 bg-primary-800 text-white">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-2xl md:text-3xl font-display font-bold mb-4">
+        Join Our Beauty Community
+      </h2>
+      <p class="text-lg text-primary-200 max-w-2xl mx-auto mb-8">
+        Subscribe to receive exclusive offers, beauty tips, and salon updates
+      </p>
+      
+      <div class="max-w-md mx-auto flex">
+        <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-l-lg focus:outline-none text-gray-800">
+        <button class="bg-primary-600 px-6 py-3 rounded-r-lg font-medium hover:bg-primary-700 transition">
+          Subscribe
+        </button>
+      </div>
+      
+      <p class="text-sm text-primary-300 mt-4">
+        We respect your privacy. Unsubscribe at any time.
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-primary-900 text-white py-12">
+    <div class="container mx-auto px-6">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <h3 class="text-xl font-display font-bold mb-4">Imesh Salon</h3>
+          <p class="text-primary-300">
+            Colombo's premier destination for luxury beauty services, offering exceptional quality and personalized care.
+          </p>
+        </div>
+        
+        <div>
+          <h4 class="font-bold mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-primary-300 hover:text-white transition">Home</a></li>
+            <li><a href="#services" class="text-primary-300 hover:text-white transition">Services</a></li>
+            <li><a href="#team" class="text-primary-300 hover:text-white transition">Our Team</a></li>
+            <li><a href="#testimonials" class="text-primary-300 hover:text-white transition">Testimonials</a></li>
+            <li><a href="#contact" class="text-primary-300 hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="font-bold mb-4">Services</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-primary-300 hover:text-white transition">Hair Styling</a></li>
+            <li><a href="#" class="text-primary-300 hover:text-white transition">Hair Coloring</a></li>
+            <li><a href="#" class="text-primary-300 hover:text-white transition">Skin Treatments</a></li>
+            <li><a href="#" class="text-primary-300 hover:text-white transition">Nail Services</a></li>
+            <li><a href="#" class="text-primary-300 hover:text-white transition">Bridal Packages</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="font-bold mb-4">Contact Us</h4>
+          <address class="not-italic text-primary-300">
+            <p class="mb-2">No. 22, Style Avenue</p>
+            <p class="mb-2">Colombo 03</p>
+            <p class="mb-2">Sri Lanka</p>
+            <p class="mb-2">077-1234567</p>
+            <p>info@imeshsalon.com</p>
+          </address>
+        </div>
+      </div>
+      
+      <div class="border-t border-primary-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-primary-300 mb-4 md:mb-0">
+          &copy; 2025 Imesh Salon. All rights reserved.
+        </p>
+        
+        <div class="flex space-x-6">
+          <a href="#" class="text-primary-300 hover:text-white transition">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="#" class="text-primary-300 hover:text-white transition">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="#" class="text-primary-300 hover:text-white transition">
+            <i class="fab fa-tiktok"></i>
+          </a>
+          <a href="#" class="text-primary-300 hover:text-white transition">
+            <i class="fab fa-pinterest-p"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Booking Modal -->
+  <div id="booking-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-8 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-display font-bold text-primary-800">Book Appointment</h3>
+        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form class="space-y-4">
+        <div>
+          <label for="booking-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+          <input type="text" id="booking-name" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div>
+          <label for="booking-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+          <input type="tel" id="booking-phone" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div>
+          <label for="booking-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="booking-email" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div>
+          <label for="booking-service" class="block text-sm font-medium text-gray-700 mb-1">Service</label>
+          <select id="booking-service" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            <option value="">Select a service</option>
+            <option value="haircut">Haircut & Styling</option>
+            <option value="color">Hair Coloring</option>
+            <option value="treatment">Hair Treatment</option>
+            <option value="facial">Facial</option>
+            <option value="manicure">Manicure</option>
+            <option value="pedicure">Pedicure</option>
+            <option value="makeup">Makeup</option>
+            <option value="bridal">Bridal Package</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="booking-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <input type="date" id="booking-date" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div>
+          <label for="booking-time" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+          <select id="booking-time" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            <option value="">Select a time</option>
+            <option value="9:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="13:00">1:00 PM</option>
+            <option value="14:00">2:00 PM</option>
+            <option value="15:00">3:00 PM</option>
+            <option value="16:00">4:00 PM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="18:00">6:00 PM</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="booking-notes" class="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
+          <textarea id="booking-notes" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+        </div>
+        
+        <button type="submit" class="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition w-full">
+          Confirm Booking
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+    
+    // Booking modal
+    const bookNowBtn = document.getElementById('book-now-btn');
+    const bookingModal = document.getElementById('booking-modal');
+    const closeModal = document.getElementById('close-modal');
+    
+    bookNowBtn.addEventListener('click', () => {
+      bookingModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+    
+    closeModal.addEventListener('click', () => {
+      bookingModal.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+    
+    // Close modal when clicking outside
+    bookingModal.addEventListener('click', (e) => {
+      if (e.target === bookingModal) {
+        bookingModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+    
+    // Animated counters
+    function animateCounters() {
+      const clients = document.getElementById('clients-count');
+      const services = document.getElementById('services-count');
+      const years = document.getElementById('years-count');
+      const awards = document.getElementById('awards-count');
+      
+      const clientsTarget = 1250;
+      const servicesTarget = 25;
+      const yearsTarget = 10;
+      const awardsTarget = 8;
+      
+      let clientsCount = 0;
+      let servicesCount = 0;
+      let yearsCount = 0;
+      let awardsCount = 0;
+      
+      const interval = setInterval(() => {
+        if (clientsCount < clientsTarget) {
+          clientsCount += 25;
+          clients.textContent = clientsCount.toLocaleString();
+        }
+        
+        if (servicesCount < servicesTarget) {
+          servicesCount += 1;
+          services.textContent = servicesCount;
+        }
+        
+        if (yearsCount < yearsTarget) {
+          yearsCount += 1;
+          years.textContent = yearsCount;
+        }
+        
+        if (awardsCount < awardsTarget) {
+          awardsCount += 1;
+          awards.textContent = awardsCount;
+        }
+        
+        if (clientsCount >= clientsTarget && 
+            servicesCount >= servicesTarget && 
+            yearsCount >= yearsTarget && 
+            awardsCount >= awardsTarget) {
+          clearInterval(interval);
+        }
+      }, 50);
+    }
+    
+    // Initialize counters when stats section is in view
+    const statsSection = document.querySelector('section.bg-primary-700');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounters();
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    
+    observer.observe(statsSection);
+    
+    // Three.js background
+    function initThreeJS() {
+      const container = document.getElementById('threejs-bg');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.setSize(width, height);
+      container.appendChild(renderer.domElement);
+      
+      // Create particles
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particleCount = 500;
+      
+      const posArray = new Float32Array(particleCount * 3);
+      
+      for(let i = 0; i < particleCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 10;
+      }
+      
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+      
+      const particlesMaterial = new THREE.PointsMaterial({
+        size: 0.02,
+        color: 0xdb2777,
+      });
+      
+      const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+      scene.add(particlesMesh);
+      
+      camera.position.z = 3;
+      
+      // Animation
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        particlesMesh.rotation.x += 0.0005;
+        particlesMesh.rotation.y += 0.0005;
+        
+        renderer.render(scene, camera);
+      }
+      
+      animate();
+      
+      // Handle resize
+      window.addEventListener('resize', () => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+      });
+    }
+    
+    // p5.js particles
+    function initP5Particles() {
+      new p5((p) => {
+        let particles = [];
+        
+        p.setup = () => {
+          let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+          canvas.position(0, 0);
+          canvas.style('z-index', '-1');
+          canvas.style('position', 'fixed');
+          canvas.style('opacity', '0.15');
+          
+          for(let i = 0; i < 50; i++) {
+            particles.push({
+              x: p.random(p.width),
+              y: p.random(p.height),
+              size: p.random(5, 15),
+              speed: p.random(0.5, 2),
+              color: p.color(219, 39, 119, 150)
+            });
+          }
+        };
+        
+        p.draw = () => {
+          p.clear();
+          
+          for(let particle of particles) {
+            p.fill(particle.color);
+            p.noStroke();
+            p.ellipse(particle.x, particle.y, particle.size);
+            
+            particle.y += particle.speed;
+            
+            if(particle.y > p.height) {
+              particle.y = 0;
+              particle.x = p.random(p.width);
+            }
+          }
+        };
+        
+        p.windowResized = () => {
+          p.resizeCanvas(p.windowWidth, p.windowHeight);
+        };
+      }, 'p5-particles');
+    }
+    
+    // Initialize animations when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      // GSAP animations
+      gsap.registerPlugin(ScrollTrigger);
+      
+      // Animate hero text
+      gsap.from('header h1 span', {
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: 'power3.out'
+      });
+      
+      gsap.from('header p', {
+        y: 30,
+        opacity: 0,
+        delay: 0.6,
+        duration: 0.8,
+        ease: 'power3.out'
+      });
+      
+      gsap.from('header button, header a', {
+        y: 30,
+        opacity: 0,
+        delay: 0.8,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: 'power3.out'
+      });
+      
+      // Animate sections on scroll
+      gsap.utils.toArray('section').forEach(section => {
+        gsap.from(section, {
+          scrollTrigger: {
+            trigger: section,
+            start: 'top 80%',
+            toggleActions: 'play none none none'
+          },
+          y: 50,
+          opacity: 0,
+          duration: 1,
+          ease: 'power3.out'
+        });
+      });
+      
+      // Animate service cards
+      gsap.utils.toArray('.service-card').forEach((card, i) => {
+        gsap.from(card, {
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 80%',
+            toggleActions: 'play none none none'
+          },
+          y: 50,
+          opacity: 0,
+          duration: 0.6,
+          delay: i * 0.1,
+          ease: 'power3.out'
+        });
+      });
+      
+      // Animate testimonial cards
+      const testimonialCards = document.querySelectorAll('.testimonial-card');
+      testimonialCards.forEach((card, i) => {
+        ScrollTrigger.create({
+          trigger: card,
+          start: 'top 80%',
+          onEnter: () => card.classList.add('active'),
+          once: true
+        });
+      });
+      
+      // Initialize Three.js and p5.js
+      initThreeJS();
+      initP5Particles();
+    });
+  </script>
+</body>
+</html>
